@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'blog',
+    'taggit',
 
 ]
 
@@ -124,6 +125,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 
+EMAIL_HOST = 'smtp.163.com'
+EMAIL_HOST_USER = 'luozhiyang229@163.com'
+EMAIL_HOST_PASSWORD = '5tgbnhy67u'
+EMAIL_USE_TLS = True
+EMAIL_FROM = 'luozhiyang229@163.com'
 
