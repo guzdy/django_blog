@@ -15,10 +15,20 @@ class EmailPostForm(forms.Form):
 
 
 class CommentForm(forms.ModelForm):
-    # 根据模型（model）创建表单，
-    # 我们只需要在这个表单的Meta类里表明使用哪个模型（model）来构建表单。
-    # Django将会解析model并为我们动态的创建表单。
-    # 每一种模型（model）字段类型都有对应的默认表单字段类型。
     class Meta:
         model = Comment
-        fields = ('name', 'email', 'body')
+        fields = ['name', 'email', 'body']
+
+        # widgets 决定了各个字段在前端渲染的输入框类型
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'placeholder': "名字",
+            }),
+            'email': forms.TextInput(attrs={
+                'placeholder': "邮箱",
+            }),
+            'body': forms.Textarea(attrs={
+                'placeholder': "评论内容",
+                'size': '2000'
+            })
+        }

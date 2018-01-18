@@ -1,0 +1,46 @@
+{% if new_comment %}
+    <h2>Your comment has been added.</h2>
+{% else %}
+    <br>
+    <h2>添加评论</h2>
+    <form action="." method="post" class="comment-form">
+        <div class="row">
+            <div class="col-md-5">
+                {{ comment_form.name }}
+                {{ comment_form.name.errors }}
+            </div>
+            <div class="col-md-5">
+                {{ comment_form.email }}
+                {{ comment_form.email.errors }}
+            </div>
+            <div class="col-md-10">
+                {{ comment_form.body }}
+                {{ comment_form.body.errors }}
+                <button type="submit"><span>发表评论</span></button>
+            </div>
+        </div>
+    </form>
+    <br>
+{% endif %}
+<div class="comment_list">
+    <h2>评论列表({{ comments.count }})</h2>
+    <ul class="list-unstyled">
+
+    {% for comment in comments %}
+        <li class="comment-item">
+            <span>
+                第 {{ forloop.counter }} 楼
+            </span>
+            <span>
+                {{ comment.name }}
+            </span>
+            <time class="date">{{ comment.created }}</time>
+            <div class="text">
+                {{ comment.body|linebreaks }}
+            </div>
+        </li>
+    {% empty %}
+        <p>暂无评论</p>
+    {% endfor %}
+    </ul>
+</div>

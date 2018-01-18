@@ -26,7 +26,8 @@ sitemaps = {
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    url(r'^blog/', include('blog.urls', namespace='blog')),
+    url(r'', include('blog.urls', namespace='blog')),
     url(r'^sitemap\.xml$', sitemap, {'sitemaps': sitemaps},
-        name='django.contrib.sitemaps.views.sitemap')
+        name='django.contrib.sitemaps.views.sitemap'),
+    url(r'^search/', include('haystack.urls')),
 ]

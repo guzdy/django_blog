@@ -1,11 +1,14 @@
-from django.shortcuts import render, get_object_or_404
-from .models import Post, Comment
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Post, Tag, Category
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.views.generic import ListView
-from .forms import EmailPostForm, CommentForm
+from django.views.generic import ListView, DetailView
+from .forms import EmailPostForm
 from django.core.mail import send_mail
-from taggit.models import Tag
 from django.db.models import Count
+import markdown
+from django.utils.text import slugify
+from markdown.extensions.toc import TocExtension
+from .forms import CommentForm
 
 
 class PostListView(ListView):
@@ -19,19 +22,146 @@ class PostListView(ListView):
     paginate_by = 3
     template_name = 'blog/post/list.html'
 
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # 父类生成的字典中已有 paginator、page_obj、is_paginated 这三个模板变量，
+        # paginator 是 Paginator 的一个实例，
+        # page_obj 是 Page 的一个实例，
+        # is_paginated 是一个布尔变量，用于指示是否已分页。
+        # 例如如果规定每页 10 个数据，而本身只有 5 个数据，其实就用不着分页，此时 is_paginated=False
+        paginator = context.get('paginator')
+        page = context.get('page_obj')
+        is_paginated = context.get('is_paginated')
+
+        # 调用自己写的 pagination_data 方法获得显示分页导航条需要的数据，见下方。
+        pagination_data = self.pagination_data(paginator, page, is_paginated)
+
+        # 将分页导航条的模板变量更新到 context 中，注意 pagination_data 方法返回的也是一个字典。
+        context.update(pagination_data)
+
+        # 将更新后的 context 返回，以便 ListView 使用这个字典中的模板变量去渲染模板。
+        # 注意此时 context 字典中已有了显示分页导航条所需的数据。
+        return context
+
+    def pagination_data(self, paginator, page, is_paginated):
+        if not is_paginated:
+            # 如果没有分页，则无需显示分页导航条，不用任何分页导航条的数据，因此返回一个空的字典
+            return {}
+
+        # 当前页左边连续的页码号，初始值为空
+        left = []
+
+        # 当前页右边连续的页码号，初始值为空
+        right = []
+
+        # 标示第 1 页页码后是否需要显示省略号
+        left_has_more = False
+
+        # 标示最后一页页码前是否需要显示省略号
+        right_has_more = False
+
+        # 标示是否需要显示第 1 页的页码号。
+        # 因为如果当前页左边的连续页码号中已经含有第 1 页的页码号，此时就无需再显示第 1 页的页码号，
+        # 其它情况下第一页的页码是始终需要显示的。
+        # 初始值为 False
+        first = False
+
+        # 标示是否需要显示最后一页的页码号。
+        # 需要此指示变量的理由和上面相同。
+        last = False
+
+        # 获得用户当前请求的页码号, 总页数
+        page_number = page.number
+        total_pages = paginator.num_pages
+
+        # 获得整个分页页码列表，比如分了四页，那么就是 [1, 2, 3, 4]
+        page_range = paginator.page_range
+
+        # 如果用户请求的是第一页的数据
+        if page_number == 1:
+            right = page_range[page_number:page_number + 2]
+            if right[-1] < total_pages - 1:
+                right_has_more = True
+
+            if right[-1] < total_pages:
+                last = True
+
+        # 如果用户请求的是最后一页的数据
+        elif page_number == total_pages:
+            left = page_range[(page_number - 3) if (
+                                                   page_number - 3) > 0 else 0: page_number - 1]
+            if left[0] > 2:
+                left_has_more = True
+            if left[0] > 1:
+                first = True
+
+        else:
+            right = page_range[page_number:page_number + 2]
+            if right[-1] < total_pages - 1:
+                right_has_more = True
+
+            if right[-1] < total_pages:
+                last = True
+            left = page_range[(page_number - 3) if (
+                                                   page_number - 3) > 0 else 0: page_number - 1]
+            if left[0] > 2:
+                left_has_more = True
+            if left[0] > 1:
+                first = True
+
+        data = {
+            'left': left,
+            'right': right,
+            'left_has_more': left_has_more,
+            'right_has_more': right_has_more,
+            'first': first,
+            'last': last,
+        }
+
+        return data
+
 
 class TagView(PostListView):
     def get_queryset(self):
-        tag = get_object_or_404(Tag, slug=self.kwargs.get('tag_slug'))
+        self.tag = get_object_or_404(Tag, slug=self.kwargs.get('tag_slug'))
         # slug 是 tag 的参数， tag_slug 是 urls 里获得的参数
-        return super().get_queryset().filter(tags__in=[tag])
+        return super().get_queryset().filter(tags__in=[self.tag])
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({'tag': self.tag})
+
+        # 将更新后的 context 返回，以便 ListView 使用这个字典中的模板变量去渲染模板。
+        # 注意此时 context 字典中已有了显示分页导航条所需的数据。
+        return context
+
+
+class CategoryView(PostListView):
+    def get_queryset(self):
+        category = get_object_or_404(
+            Category, slug=self.kwargs.get('category_slug'))
+        # slug 是 tag 的参数， tag_slug 是 urls 里获得的参数
+        return super().get_queryset().filter(category=category)
+
+
+class ArchivesView(PostListView):
+    def get_queryset(self):
+        self.year = self.kwargs.get('year')
+        self.month = self.kwargs.get('month')
+        return super().get_queryset().filter(publish__year=self.year,
+                                             publish__month=self.month)
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({'year': self.year, 'month': self.month})
+        return context
 
 
 def post_share(request, post_id):
     post = get_object_or_404(Post, id=post_id, status='published')
     sent = False
     cd = None  # cleaned data 验证后的数据
-    # 。如果我们得到一个GET请求，一个空的表单必须显示，
+    # 如果我们得到一个GET请求，一个空的表单必须显示，
     # 而如果我们得到一个POST请求，则表单需要提交和处理。
     if request.method == 'POST':
         form = EmailPostForm(request.POST)
@@ -72,10 +202,24 @@ def post_list(request):
 """
 
 
-def post_detail(request, year, month, day, post):
-    post = get_object_or_404(Post, slug=post, status='published',
-                             publish__year=year, publish__month=month,
-                             publish__day=day)
+def post_detail(request, slug):
+    post = get_object_or_404(Post, slug=slug, status='published')
+
+    post.increase_views()
+    md = markdown.Markdown(extensions=[
+        'markdown.extensions.extra',
+        'markdown.extensions.codehilite',
+        # 'markdown.extensions.toc',
+        # extensions 中的 toc 拓展不再是字符串 markdown.extensions.toc
+        # ，而是 TocExtension 的实例。TocExtension 在实例化时其 slugify 参数
+        # 可以接受一个函数作为参数，这个函数将被用于处理标题的锚点值。
+        # Markdown 内置的处理方法不能处理中文标题，所以我们使用了 django.utils.text
+        # 中的 slugify 方法，该方法可以很好地处理中文。
+        TocExtension(slugify=slugify),
+    ])
+    post.body = md.convert(post.body)
+    post.toc = md.toc
+
     comments = post.comments.filter(active=True)
     new_comment = None
 
@@ -88,6 +232,8 @@ def post_detail(request, year, month, day, post):
             # Assign the current post to the comment
             new_comment.post = post
             new_comment.save()
+            # 重定向到 post 的详情页
+            return redirect(post)
     else:
         comment_form = CommentForm()
 
@@ -103,7 +249,4 @@ def post_detail(request, year, month, day, post):
                   {'post': post, 'comments': comments,
                    'new_comment': new_comment, 'comment_form': comment_form,
                    'similar_posts': similar_posts})
-
-
-
 

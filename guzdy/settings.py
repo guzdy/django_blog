@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'blog',
-    'taggit',
+    'haystack',
+
     'django.contrib.sites',
     'django.contrib.sitemaps',
 
@@ -138,3 +139,14 @@ EMAIL_HOST_PASSWORD = '5tgbnhy67u'
 EMAIL_USE_TLS = True
 EMAIL_FROM = 'luozhiyang229@163.com'
 
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        'ENGINE': 'blog.whoosh_cn_backend.WhooshEngine',
+        'PATH': os.path.join(BASE_DIR, 'whoosh_index'),
+    },
+}
+HAYSTACK_SEARCH_RESULTS_PER_PAGE = 10
+# HAYSTACK_SIGNAL_PROCESSOR 指定什么时候更新索引，
+# 这里我们使用 haystack.signals.RealtimeSignalProcessor，
+# 作用是每当有文章更新时就更新索引。由于博客文章更新不会太频繁，因此实时更新没有问题。
+HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
