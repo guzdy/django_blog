@@ -123,17 +123,9 @@ class PostListView(ListView):
 
 class TagView(PostListView):
     def get_queryset(self):
-        self.tag = get_object_or_404(Tag, slug=self.kwargs.get('tag_slug'))
+        tag = get_object_or_404(Tag, slug=self.kwargs.get('tag_slug'))
         # slug 是 tag 的参数， tag_slug 是 urls 里获得的参数
-        return super().get_queryset().filter(tags__in=[self.tag])
-
-    def get_context_data(self, *, object_list=None, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update({'tag': self.tag})
-
-        # 将更新后的 context 返回，以便 ListView 使用这个字典中的模板变量去渲染模板。
-        # 注意此时 context 字典中已有了显示分页导航条所需的数据。
-        return context
+        return super().get_queryset().filter(tags__in=[tag])
 
 
 class CategoryView(PostListView):
@@ -146,15 +138,13 @@ class CategoryView(PostListView):
 
 class ArchivesView(PostListView):
     def get_queryset(self):
-        self.year = self.kwargs.get('year')
-        self.month = self.kwargs.get('month')
-        return super().get_queryset().filter(publish__year=self.year,
-                                             publish__month=self.month)
-
-    def get_context_data(self, *, object_list=None, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update({'year': self.year, 'month': self.month})
-        return context
+        year = self.kwargs.get('year')
+        month = self.kwargs.get('month')
+        result = super().get_queryset().filter(publish__year=year,
+                                               publish__month=month)
+        self.count = result.count()
+        print(result.count())
+        return result
 
 
 def post_share(request, post_id):

@@ -29,7 +29,7 @@ class Tag(models.Model):
 
 class PublishedManager(models.Manager):
     def get_queryset(self):
-        return super().get_queryset().filter(status='published')
+        return super().get_queryset().filter(status='published', publish__lte=timezone.now())
 
 
 class Post(models.Model):
@@ -46,7 +46,7 @@ class Post(models.Model):
     # 在相同的日期中Django会阻止多篇帖子拥有相同的slug。
     slug = models.SlugField(max_length=250, unique=True)
     # related_name属性指定了从User到Post的反向关系名
-    author = models.ForeignKey(User, related_name='blog_posts', on_delete=models.CASCADE)
+    author = models.ForeignKey(User, related_name='blog_posts', on_delete=models.CASCADE, default='1')
     body = models.TextField()
     publish = models.DateTimeField(default=timezone.now)
     # 因为我们在这儿使用了auto_now_add，当一个对象被创建的时候这个字段会自动保存当前日期。
@@ -54,7 +54,7 @@ class Post(models.Model):
     # 更新保存一个对象的时候这个字段将会自动更新到当前日期。
     updated = models.DateTimeField(auto_now=True)
     # 我们使用了一个choices参数，这样这个字段的值只能是给予的选择参数中的某一个值。
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=1)
     objects = models.Manager()  # the default manager，一定要设置，不然 PublishedManager 成为默认 manager
     published = PublishedManager()  # custom manager ; Post.published.filter(title__startswith='Who')
 

@@ -41,7 +41,12 @@ def markdown_format(text):
 @register.simple_tag
 def archives():
     # 这个 dates 方法会返回一个列表，列表中的元素为每一篇 Post 创建的时间，精确到月份，降序排列
-    return Post.objects.dates('publish', 'month', order='DESC')
+    return Post.published.dates('publish', 'month', order='DESC')
+
+
+@register.simple_tag
+def archive_count(year, month):
+    return Post.published.filter(publish__year=year,publish__month=month).count()
 
 
 @register.simple_tag

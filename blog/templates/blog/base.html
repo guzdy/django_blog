@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <!-- favicon -->
-    <link rel="shortcut icon" href="{%static "images/favicon.ico"  %}" />
+    <link rel="shortcut icon" href="{%static 'images/favicon.ico'  %}" />
 
     <!-- css -->
     <link href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
@@ -47,6 +47,7 @@
                         {% for category in category_list %}
                             <li class="cl-effect-11"><a href="{% url 'blog:category' category.slug %}" data-hover="{{ category.name }}">{{ category.name }}</a></li>
                         {% endfor %}
+                            <li class="cl-effect-11"><a href="{% url 'blog:post_detail' 'about' %}" data-hover="关于">关于</a></li>
                         </ul>
                     </div><!-- /.navbar-collapse -->
                 </nav>
@@ -79,7 +80,7 @@
                         <li>
                             <!--这里 URL 模板标签的作用是解析视图函数 blog:archives 对应的 url 格式，
                             并把 url 格式中的年和月替换成 date.year，date.month 的值。  -->
-                            <a href="{% url 'blog:archives' date.year date.month %}">{{ date.year }} 年 {{ date.month }} 月</a>
+                            <a href="{% url 'blog:archives' date.year date.month %}">{{ date.year }} 年 {{ date.month }} 月（{% archive_count date.year date.month %}）</a>
                         </li>
                     {% endfor %}
                     </ul>
@@ -104,6 +105,20 @@
                             <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
                         </li>
                     {% endfor %}
+                    </ul>
+                </div>
+                <div class="widget widget-contact-me">
+                    <h3 class="widget-title">联系我</h3>
+                    <ul>
+                        <li>
+                            <a href="mailto:toraj@foxmail.com" target="_blank">E-Mail <i class="ion-ios-email-outline"></i></a>
+                        </li>
+                        <li class="github">
+                            <a href="https://github.com/guzdy" target="_blank">GitHub <i class="ion-social-github-outline"></i></a>
+                        </li>
+                        <li>
+                            <a href="https://www.zhihu.com/people/guzdii" target="_blank">知 乎 <i class="ion-ios-chatbubble-outline"></i></a>
+                        </li>
                     </ul>
                 </div>
                 <div class="rss">
@@ -134,6 +149,7 @@
         {% for category in category_list %}
             <li><a href="{% url 'blog:category' category.slug %}">{{ category.name }}</a></li>
         {% endfor %}
+            <li><a href="{% url 'blog:post_detail' 'about' %}" data-hover="关于">关于</a></li>
         </ul>
     </nav>
 </div>

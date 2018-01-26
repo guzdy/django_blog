@@ -46,7 +46,7 @@ h3 {
   }
 
 h4 {
-  font-size: 18px;
+  font-size: 20px;
   }
 
 h5 {
@@ -57,7 +57,8 @@ h6 {
   font-size: 14px;
  }
 li {
-  font-size: 14px;
+  font-size: 16px;
+  font-family: "Microsoft Yahei";
  }
 
 
@@ -85,6 +86,7 @@ body {
 }
 
 p {
+    font-size: 16px;
     font-family: "Microsoft Yahei", 'Ubuntu', sans-serif;
     font-weight: 400;
     word-spacing: 1px;
@@ -367,6 +369,29 @@ img {
     line-height: 1.6;
     padding: 10px 0 0;
     font-weight: 400;
+}
+
+.widget-contact-me ul {
+    padding: 0;
+    margin: 0;
+    padding-left: 20px;
+}
+
+.widget-contact-me ul li {
+    list-style-type: none;
+    position: relative;
+    line-height: 170%;
+    margin-bottom: 10px;
+}
+
+.widget-contact-me ul li::before {
+    content: '\f47f';
+    font-family: "Ionicons";
+    position: absolute;
+    left: -17px;
+    top: 3px;
+    font-size: 16px;
+    color: #000;
 }
 
 .widget-similar-posts ul {
